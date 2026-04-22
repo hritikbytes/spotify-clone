@@ -1,5 +1,3 @@
----
-
 # Spotify Clone Audio Engine
 > Engineered to deliver an authentic music streaming experience, this dynamic audio engine transforms static UI into an immersive hub for discovering and exploring high-fidelity audio previews across diverse genres.
 
@@ -42,5 +40,3 @@ One of the primary technical hurdles was engineering a robust, state-driven audi
 ## 🤝 Contact
 - **Developer:** Hritik Sharma
 - **Links:** [LinkedIn](https://www.linkedin.com/in/hritiksharma0608/) | [GitHub](https://github.com/hritikbytes) | **Email:** hritiksharma.0608@gmail.com
-
----
