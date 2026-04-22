@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Spotify Clone – Stream free 30-second music previews across every genre. Built with the iTunes Open API."
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" href="favicon.ico" />
+    <title>Spotify - Web Player: Music for everyone</title>
+  </head>
+  <body>
+    <!-- Toast Notifications -->
+    <div id="toast-container" aria-live="polite"></div>
+
+    <!-- Navigation Bar -->
+    <div class="navbar">
+      <!-- Hamburger (Mobile) -->
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open library">
+        <img src="img/hamburger.svg" alt="menu" />
+      </button>
+
+      <!-- Spotify Logo -->
+      <div class="logo1">
+        <img src="img/logo.svg" alt="Spotify" />
+      </div>
+
+      <!-- Search Bar Section -->
+      <div class="homebar">
+        <div class="home1" id="homeBtn" title="Home">
+          <img src="img/home.svg" alt="home" />
+        </div>
+        <div class="inputSearch">
+          <img class="search1" src="img/search.svg" alt="search" />
+          <input
+            id="globalSearch"
+            type="text"
+            placeholder="What do you want to listen to?"
+            autocomplete="off"
+          />
+          <div class="cart" title="Browse">
+            <img src="img/cart.svg" alt="browse" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="secondPart">
+        <div class="sameButton">
+          <button>Premium</button>
+          <button>Support</button>
+          <button>Download</button>
+        </div>
+        <div class="divider"></div>
+        <button class="install" title="Install App">
+          <img src="img/install.svg" alt="install" />
+          <span>Install App</span>
+        </button>
+        <button id="signUp">Sign up</button>
+        <button id="logIn">Log in</button>
+      </div>
+    </div>
+
+    <!-- Backdrop overlay for mobile sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content Container -->
+    <div class="main-container">
+      <!-- Dynamic color backdrop -->
+      <div class="backdrop" id="colorBackdrop"></div>
+
+      <div class="container">
+        <!-- Left Sidebar - Library Section -->
+        <div class="left" id="leftSidebar">
+          <!-- Close Button for Mobile -->
+          <div class="close" id="closeSidebar">
+            <img src="img/close.svg" alt="close" />
+          </div>
+
+          <div class="library">
+            <!-- Library Header -->
+            <div class="heading">
+              <img src="img/playlist.svg" alt="library" />
+              <h2>Your Library</h2>
+              <span class="song-count" id="songCount"></span>
+            </div>
+
+            <!-- Sidebar Search -->
+            <div class="sidebar-search">
+              <img src="img/search.svg" alt="search" />
+              <input
+                id="sidebarSearch"
+                type="text"
+                placeholder="Search in playlist…"
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- Song List -->
+            <div class="songList" id="songListContainer">
+              <ul id="songUL"></ul>
+              <!-- Loading Spinner -->
+              <div class="loading-spinner hidden" id="loadingSpinner">
+                <div class="spinner"></div>
+                <span>Loading tracks…</span>
+              </div>
+              <!-- Empty State -->
+              <div class="empty-state" id="emptyState">
+                <div class="empty-icon">🎵</div>
+                <p>Pick a playlist to start listening</p>
+              </div>
+            </div>
+
+            <!-- Footer Links -->
+            <div class="footer">
+              <a href="#">Legal</a>
+              <a href="#">Privacy Center</a>
+              <a href="#">Privacy Policy</a>
+              <a href="#">Cookies</a>
+              <a href="#">About Ads</a>
+              <a href="#">Accessibility</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Section - Spotify Playlists -->
+        <div class="right" id="rightPanel">
+          <div class="spotifyPlaylists">
+            <h1>Good evening 👋</h1>
+            <p class="section-subtitle">Pick a playlist to start streaming</p>
+            <div class="cardContainer" id="cardContainer"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Playbar -->
+      <div class="playbar">
+        <!-- Left: Now Playing Info -->
+        <div class="playbar-left">
+          <div class="album-art-wrap">
+            <img id="current-album-cover" src="img/music.svg" alt="Album Art" />
+          </div>
+          <div class="songinfo">
+            <div class="song-title" id="songTitle">Select a song</div>
+            <div class="song-artist" id="songArtist">–</div>
+          </div>
+          <button
+            class="heart-btn"
+            id="heartBtn"
+            title="Save to Liked Songs"
+            aria-pressed="false"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+              ></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Center: Controls & Seekbar -->
+        <div class="playbar-center">
+          <div class="songbuttons">
+            <button class="ctrl-btn" id="shuffleBtn" title="Shuffle (S)">
+              <img src="img/shuffle.svg" alt="shuffle" />
+            </button>
+            <button class="ctrl-btn" id="previous" title="Previous (←)">
+              <img src="img/prevsong.svg" alt="previous" />
+            </button>
+            <button
+              class="play-button"
+              id="play"
+              title="Play / Pause (Space)"
+              aria-label="Play"
+            >
+              <img id="playIcon" src="img/play.svg" alt="play" />
+            </button>
+            <button class="ctrl-btn" id="next" title="Next (→)">
+              <img src="img/nextsong.svg" alt="next" />
+            </button>
+            <button class="ctrl-btn" id="repeatBtn" title="Repeat (R)">
+              <img src="img/repeat.svg" alt="repeat" />
+            </button>
+          </div>
+          <div class="seekbar-container">
+            <span class="songtime-current" id="currentTime">0:00</span>
+            <div
+              class="seekbar"
+              id="seekbar"
+              role="slider"
+              aria-label="Song progress"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              <div class="seekbar-progress" id="seekbarProgress"></div>
+              <div class="circle" id="seekCircle"></div>
+            </div>
+            <span class="songtime-duration" id="songDuration">0:00</span>
+          </div>
+        </div>
+
+        <!-- Right: Volume -->
+        <div class="playbar-right">
+          <div class="volume">
+            <button class="vol-icon-btn" id="volIconBtn" title="Mute/Unmute">
+              <img src="img/volume.svg" alt="volume" id="volIcon" />
+            </button>
+            <div class="vol-range-wrap">
+              <input
+                type="range"
+                id="volumeRange"
+                name="volume"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="Volume"
+              />
+              <div class="vol-fill" id="volFill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/script.js"></script>
+  </body>
+</html>
