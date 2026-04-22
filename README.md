@@ -25,8 +25,9 @@
 
 ## 📦 Installation & Setup
 1. **Clone the repo:** `git clone https://github.com/hritikbytes/SpotifyClone.git`
-2. **Install dependencies:** `npm install` *(if utilizing any build tools later on, currently pure vanilla setup)*
-3. **Run the app:** Open `index.html` in your favorite browser. No build steps are required! Alternatively, use a local server like VS Code Live Server (`npx http-server -p 8000`).
+2. **Install dependencies:** `npm install`
+3. **Run the development server:** `npm run dev`
+4. **Build for production:** `npm run build`
 
 ## 💡 Technical Challenges & Learning
 One of the primary technical hurdles was engineering a robust, state-driven audio engine using only Vanilla JavaScript and the native HTML5 Audio API. Synchronizing real-time audio playback events (like `timeupdate` and `ended`) with the custom UI seekbar, active track equalizer animations, and shuffle/repeat logic required meticulous state management to avoid race conditions and desynchronization. Furthermore, integrating the iTunes Open API asynchronously while providing instant visual feedback via loaders and toast notifications significantly enhanced my skills in managing asynchronous JavaScript and error handling.

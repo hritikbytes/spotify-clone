@@ -1,0 +1,26 @@
+{
+  "name": "spotifyclone",
+  "version": "1.0.0",
+  "description": "> Engineered to deliver an authentic music streaming experience, this dynamic audio engine transforms static UI into an immersive hub for discovering and exploring high-fidelity audio previews across diverse genres.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hritikbytes/spotify-clone.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/hritikbytes/spotify-clone/issues"
+  },
+  "homepage": "https://github.com/hritikbytes/spotify-clone#readme",
+  "devDependencies": {
+    "vite": "^8.0.9"
+  }
+}
