@@ -8,7 +8,8 @@
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![iTunes API](https://img.shields.io/badge/API-iTunes_Search_API-FA243C?style=for-the-badge&logo=apple&logoColor=white)](https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/iTuneSearchAPI/)
 
-**Live Demo:** Add your deployed URL here if this project is currently hosted.
+**Live Demo:** [spotify-clone-delta-gules.vercel.app](https://spotify-clone-delta-gules.vercel.app/)
+
 
 ---
 
@@ -398,8 +399,12 @@ Web Developer focused on React, Next.js, TypeScript, and modern full-stack web d
 
 ---
 
+---
+
 <div align="center">
 
 **Built independently by Hritik Sharma**
+
+[Live Demo](https://spotify-clone-delta-gules.vercel.app/) · [GitHub Repository](https://github.com/hritikbytes/SpotifyClone)
 
 </div>
