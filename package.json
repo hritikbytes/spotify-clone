@@ -1,7 +1,7 @@
 {
   "name": "spotifyclone",
   "version": "1.0.0",
-  "description": "> Engineered to deliver an authentic music streaming experience, this dynamic audio engine transforms static UI into an immersive hub for discovering and exploring high-fidelity audio previews across diverse genres.",
+  "description": "Vanilla JavaScript music player built with the HTML5 Audio API and iTunes Search API.",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
@@ -12,9 +12,15 @@
     "type": "git",
     "url": "git+https://github.com/hritikbytes/spotify-clone.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "music-player",
+    "vanilla-javascript",
+    "html5-audio",
+    "itunes-api",
+    "vite"
+  ],
+  "author": "Hritik Sharma",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/hritikbytes/spotify-clone/issues"

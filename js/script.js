@@ -1,20 +1,35 @@
-console.info("🎵 Spotify Clone Audio Engine v2 Initialized");
-
-/* ─────────────────────────────────────────
-   STATE
-───────────────────────────────────────── */
+// Application state
 let currentSong = new Audio();
-let currentSongsArray = []; // all tracks for active playlist
-let filteredSongs = []; // after sidebar search filter
+let currentSongsArray = []; // Tracks for the currently selected playlist
+let filteredSongs = []; // Tracks filtered by sidebar search
 let currentSongIndex = 0;
 let isShuffled = false;
 let repeatMode = 0; // 0 = off, 1 = repeat all, 2 = repeat one
-let likedSongs = new Set(); // track IDs that are liked
 let activePlaylistId = null;
 
-/* ─────────────────────────────────────────
-   PLAYLIST DEFINITIONS
-───────────────────────────────────────── */
+// Persist liked songs in localStorage
+const STORAGE_KEY_LIKED = "spotify_clone_liked";
+
+function loadLikedSongs() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_LIKED);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveLikedSongs() {
+  try {
+    localStorage.setItem(STORAGE_KEY_LIKED, JSON.stringify([...likedSongs]));
+  } catch (err) {
+    console.warn("Could not save liked songs:", err);
+  }
+}
+
+let likedSongs = loadLikedSongs();
+
+// Playlist definitions
 const PLAYLISTS = [
   {
     id: "pop",
@@ -117,9 +132,7 @@ const PLAYLISTS = [
   },
 ];
 
-/* ─────────────────────────────────────────
-   DOM REFS
-───────────────────────────────────────── */
+// DOM references
 const $ = (id) => document.getElementById(id);
 const dom = {
   cardContainer: $("cardContainer"),
@@ -154,11 +167,12 @@ const dom = {
   hamburgerBtn: $("hamburgerBtn"),
   closeSidebar: $("closeSidebar"),
   globalSearch: $("globalSearch"),
+  homeBtn: $("homeBtn"),
+  logo: document.querySelector(".logo1"),
+  rightPanel: $("rightPanel"),
 };
 
-/* ─────────────────────────────────────────
-   UTILS
-───────────────────────────────────────── */
+// Utilities
 function fmtTime(s) {
   if (isNaN(s) || s < 0) return "0:00";
   const m = Math.floor(s / 60);
@@ -166,18 +180,24 @@ function fmtTime(s) {
   return `${m}:${String(sec).padStart(2, "0")}`;
 }
 
+// iTunes provides 100x100 artwork; replacing URL segment gives high-res 400x400
 function hdArt(url100) {
   return url100?.replace("100x100bb", "400x400bb") || "img/music.svg";
 }
 
 function trackId(track) {
-  // stable id from iTunes
   return String(track.trackId || track.previewUrl);
 }
 
-/* ─────────────────────────────────────────
-   TOAST SYSTEM
-───────────────────────────────────────── */
+function escapeHTML(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// Toast notification helper
 function showToast(msg, duration = 2200) {
   const t = document.createElement("div");
   t.className = "toast";
@@ -189,16 +209,11 @@ function showToast(msg, duration = 2200) {
   }, duration);
 }
 
-/* ─────────────────────────────────────────
-   BACKDROP COLOR
-───────────────────────────────────────── */
 function setBackdropColor(hexColor) {
   dom.colorBackdrop.style.background = `radial-gradient(ellipse at top left, ${hexColor}55 0%, transparent 65%)`;
 }
 
-/* ─────────────────────────────────────────
-   RENDER PLAYLISTS (Cards)
-───────────────────────────────────────── */
+// Render playlist grid cards
 function renderPlaylists() {
   dom.cardContainer.innerHTML = "";
   PLAYLISTS.forEach((pl, i) => {
@@ -207,42 +222,36 @@ function renderPlaylists() {
     card.id = `card-${pl.id}`;
     card.style.animationDelay = `${i * 40}ms`;
     card.innerHTML = `
-            <div class="card-play">
-                <svg viewBox="0 0 24 24" fill="#000"><path d="M5 20V4l14 8-14 8z"/></svg>
-            </div>
-            <img src="${pl.cover}" alt="${pl.title}" loading="lazy">
-            <h2>${pl.title}</h2>
-            <p>${pl.desc}</p>`;
+      <div class="card-play">
+        <svg viewBox="0 0 24 24" fill="#000"><path d="M5 20V4l14 8-14 8z"/></svg>
+      </div>
+      <img src="${pl.cover}" alt="${pl.title}" loading="lazy">
+      <h2>${pl.title}</h2>
+      <p>${pl.desc}</p>`;
     card.addEventListener("click", () => loadPlaylist(pl));
     dom.cardContainer.appendChild(card);
   });
 }
 
-/* ─────────────────────────────────────────
-   LOAD PLAYLIST (fetch + render sidebar)
-───────────────────────────────────────── */
+// Fetch tracks from iTunes Search API and populate the sidebar
 async function loadPlaylist(playlist) {
-  if (activePlaylistId === playlist.id) return; // already loaded
+  if (activePlaylistId === playlist.id) return;
   activePlaylistId = playlist.id;
 
-  // Visual feedback on card
   document
     .querySelectorAll(".card")
     .forEach((c) => c.classList.remove("active-card"));
   const activeCard = $(`card-${playlist.id}`);
   if (activeCard) activeCard.classList.add("active-card");
 
-  // Update backdrop
   setBackdropColor(playlist.color);
 
-  // Show spinner, hide list
   dom.songUL.innerHTML = "";
   dom.emptyState.classList.add("hidden");
   dom.loadingSpinner.classList.remove("hidden");
   dom.songCount.textContent = "";
   dom.sidebarSearch.value = "";
 
-  // On mobile: open sidebar
   openSidebar();
 
   const url = `https://itunes.apple.com/search?term=${encodeURIComponent(playlist.query)}&limit=30&media=music`;
@@ -264,7 +273,6 @@ async function loadPlaylist(playlist) {
       `🎶 ${playlist.title} loaded — ${currentSongsArray.length} tracks`,
     );
 
-    // Auto-load first track without playing
     currentSongIndex = 0;
     loadTrackIntoPlaybar(currentSongsArray[0]);
   } catch (err) {
@@ -275,9 +283,7 @@ async function loadPlaylist(playlist) {
   }
 }
 
-/* ─────────────────────────────────────────
-   RENDER SIDEBAR LIST
-───────────────────────────────────────── */
+// Render tracklist in sidebar
 function renderSidebarList(songs) {
   dom.songUL.innerHTML = "";
   songs.forEach((track, idx) => {
@@ -286,15 +292,15 @@ function renderSidebarList(songs) {
     li.dataset.index = realIdx;
     li.style.animationDelay = `${idx * 25}ms`;
     li.innerHTML = `
-            <div class="track-num" data-num="${realIdx + 1}">${realIdx + 1}</div>
-            <img class="track-art" src="${hdArt(track.artworkUrl100)}" alt="art">
-            <div class="info">
-                <div>${escapeHTML(track.trackName)}</div>
-                <div>${escapeHTML(track.artistName)}</div>
-            </div>
-            <div class="equalizer hidden">
-                <span></span><span></span><span></span>
-            </div>`;
+      <div class="track-num" data-num="${realIdx + 1}">${realIdx + 1}</div>
+      <img class="track-art" src="${hdArt(track.artworkUrl100)}" alt="art">
+      <div class="info">
+        <div>${escapeHTML(track.trackName)}</div>
+        <div>${escapeHTML(track.artistName)}</div>
+      </div>
+      <div class="equalizer hidden">
+        <span></span><span></span><span></span>
+      </div>`;
     li.addEventListener("click", () => {
       currentSongIndex = realIdx;
       playTrack(currentSongsArray[realIdx]);
@@ -305,13 +311,11 @@ function renderSidebarList(songs) {
   refreshActiveTrackUI();
 }
 
-/* ─────────────────────────────────────────
-   ACTIVE TRACK HIGHLIGHT + EQUALIZER
-───────────────────────────────────────── */
+// Update active track row styling and equalizer bar state
 function refreshActiveTrackUI() {
   const items = dom.songUL.querySelectorAll("li");
   items.forEach((li) => {
-    const idx = parseInt(li.dataset.index);
+    const idx = parseInt(li.dataset.index, 10);
     const eq = li.querySelector(".equalizer");
     const num = li.querySelector(".track-num");
     const isActive = idx === currentSongIndex;
@@ -329,25 +333,16 @@ function refreshActiveTrackUI() {
   });
 }
 
-function escapeHTML(str) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-/* ─────────────────────────────────────────
-   LOAD TRACK INTO PLAYBAR (no auto-play)
-───────────────────────────────────────── */
+// Prepare track in playbar without auto-playing
 function loadTrackIntoPlaybar(track) {
   currentSong.src = track.previewUrl;
+  dom.playIcon.src = "img/play.svg";
+  dom.playBtn.setAttribute("aria-label", "Play");
   updatePlaybarUI(track);
+  refreshActiveTrackUI();
 }
 
-/* ─────────────────────────────────────────
-   PLAY TRACK
-───────────────────────────────────────── */
+// Play track and synchronize playbar UI
 function playTrack(track) {
   currentSong.src = track.previewUrl;
   currentSong.play().catch((e) => console.warn("Playback error:", e));
@@ -357,27 +352,23 @@ function playTrack(track) {
   refreshActiveTrackUI();
 }
 
-/* ─────────────────────────────────────────
-   UPDATE PLAYBAR UI
-───────────────────────────────────────── */
+// Sync track metadata, seekbar, and heart icon to playbar
 function updatePlaybarUI(track) {
   dom.songTitle.textContent = track.trackName;
   dom.songArtist.textContent = track.artistName;
   dom.albumCover.src = hdArt(track.artworkUrl100);
   dom.currentTime.textContent = "0:00";
-  dom.duration.textContent = "0:30"; // iTunes previews are 30s
+  dom.duration.textContent = "0:30"; // iTunes preview limit is 30 seconds
   dom.seekbarProg.style.width = "0%";
   dom.seekCircle.style.left = "0%";
+  dom.seekbar.setAttribute("aria-valuenow", "0");
 
-  // Update heart state
   const liked = likedSongs.has(trackId(track));
   dom.heartBtn.classList.toggle("liked", liked);
   dom.heartBtn.setAttribute("aria-pressed", liked);
 }
 
-/* ─────────────────────────────────────────
-   SHUFFLE LOGIC
-───────────────────────────────────────── */
+// Shuffle & Repeat controls
 function toggleShuffle() {
   isShuffled = !isShuffled;
   dom.shuffleBtn.classList.toggle("active", isShuffled);
@@ -402,9 +393,6 @@ function getPrevIndex() {
   );
 }
 
-/* ─────────────────────────────────────────
-   REPEAT LOGIC
-───────────────────────────────────────── */
 const REPEAT_LABELS = ["🔁 Repeat off", "🔁 Repeat all", "🔂 Repeat one"];
 function cycleRepeat() {
   repeatMode = (repeatMode + 1) % 3;
@@ -412,9 +400,7 @@ function cycleRepeat() {
   showToast(REPEAT_LABELS[repeatMode]);
 }
 
-/* ─────────────────────────────────────────
-   LIKE / HEART
-───────────────────────────────────────── */
+// Liked Songs toggle with localStorage persistence
 const currentTrack = () => currentSongsArray[currentSongIndex] || null;
 
 function toggleLike() {
@@ -432,7 +418,8 @@ function toggleLike() {
     dom.heartBtn.setAttribute("aria-pressed", "true");
     showToast("💚 Added to Liked Songs");
   }
-  // animate
+  saveLikedSongs();
+
   dom.heartBtn.animate(
     [
       { transform: "scale(1)" },
@@ -443,9 +430,7 @@ function toggleLike() {
   );
 }
 
-/* ─────────────────────────────────────────
-   SIDEBAR SEARCH FILTER
-───────────────────────────────────────── */
+// Sidebar tracklist filter
 function filterSidebar(query) {
   const q = query.trim().toLowerCase();
   filteredSongs = q
@@ -459,9 +444,7 @@ function filterSidebar(query) {
   dom.songCount.textContent = filteredSongs.length;
 }
 
-/* ─────────────────────────────────────────
-   MOBILE SIDEBAR
-───────────────────────────────────────── */
+// Mobile sidebar drawer
 function openSidebar() {
   if (window.innerWidth <= 768) {
     dom.leftSidebar.classList.add("open");
@@ -469,28 +452,24 @@ function openSidebar() {
     document.body.classList.add("sidebar-open");
   }
 }
+
 function closeSidebar() {
   dom.leftSidebar.classList.remove("open");
   dom.sidebarOverlay.classList.remove("active");
   document.body.classList.remove("sidebar-open");
 }
 
-/* ─────────────────────────────────────────
-   VOLUME FILL UPDATE
-───────────────────────────────────────── */
 function updateVolFill(val) {
   dom.volFill.style.width = `${val}%`;
 }
 
-/* ─────────────────────────────────────────
-   EVENT LISTENERS
-───────────────────────────────────────── */
+// Event Listeners
 function setupEventListeners() {
-  /* ── Play / Pause ── */
+  // Play / Pause toggle
   dom.playBtn.addEventListener("click", () => {
     if (!currentSong.src) return;
     if (currentSong.paused) {
-      currentSong.play();
+      currentSong.play().catch((e) => console.warn("Playback error:", e));
       dom.playIcon.src = "img/pause.svg";
       dom.playBtn.setAttribute("aria-label", "Pause");
     } else {
@@ -501,29 +480,44 @@ function setupEventListeners() {
     refreshActiveTrackUI();
   });
 
-  /* ── Time Update / Seekbar ── */
+  // Time update and seekbar synchronization
   currentSong.addEventListener("timeupdate", () => {
     const pct = (currentSong.currentTime / currentSong.duration) * 100 || 0;
     dom.currentTime.textContent = fmtTime(currentSong.currentTime);
     dom.duration.textContent = fmtTime(currentSong.duration);
     dom.seekbarProg.style.width = pct + "%";
     dom.seekCircle.style.left = pct + "%";
+    dom.seekbar.setAttribute("aria-valuenow", Math.round(pct));
   });
 
-  /* ── Seek Click ── */
+  // Seekbar click-to-seek
   dom.seekbar.addEventListener("click", (e) => {
     if (!currentSong.duration) return;
     const rect = dom.seekbar.getBoundingClientRect();
     if (!rect.width) return;
-    const pct = e.clientX / rect.width - rect.left / rect.width;
+    const pct = (e.clientX - rect.left) / rect.width;
     currentSong.currentTime =
       currentSong.duration * Math.max(0, Math.min(1, pct));
   });
 
-  /* ── Previous ── */
+  // Seekbar keyboard arrow keys
+  dom.seekbar.addEventListener("keydown", (e) => {
+    if (!currentSong.duration) return;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      currentSong.currentTime = Math.max(0, currentSong.currentTime - 5);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      currentSong.currentTime = Math.min(
+        currentSong.duration,
+        currentSong.currentTime + 5,
+      );
+    }
+  });
+
+  // Previous: restarts track if more than 3 seconds in, else loads previous track
   dom.prevBtn.addEventListener("click", () => {
     if (currentSongsArray.length === 0) return;
-    // If > 3s played, restart current track
     if (currentSong.currentTime > 3) {
       currentSong.currentTime = 0;
       return;
@@ -532,49 +526,47 @@ function setupEventListeners() {
     playTrack(currentSongsArray[currentSongIndex]);
   });
 
-  /* ── Next ── */
+  // Next track
   dom.nextBtn.addEventListener("click", () => {
     if (currentSongsArray.length === 0) return;
     currentSongIndex = getNextIndex();
     playTrack(currentSongsArray[currentSongIndex]);
   });
 
-  /* ── Track End ── */
+  // Handle track playback completion
   currentSong.addEventListener("ended", () => {
     if (repeatMode === 2) {
       currentSong.currentTime = 0;
-      currentSong.play();
+      currentSong.play().catch((e) => console.warn("Playback error:", e));
       return;
     }
     if (repeatMode === 1 || currentSongIndex < currentSongsArray.length - 1) {
       currentSongIndex = getNextIndex();
       playTrack(currentSongsArray[currentSongIndex]);
     } else {
-      // End of list, reset UI
       dom.playIcon.src = "img/play.svg";
       dom.playBtn.setAttribute("aria-label", "Play");
+      dom.currentTime.textContent = "0:00";
+      dom.seekbarProg.style.width = "0%";
+      dom.seekCircle.style.left = "0%";
+      dom.seekbar.setAttribute("aria-valuenow", "0");
       refreshActiveTrackUI();
     }
   });
 
-  /* ── Shuffle ── */
   dom.shuffleBtn.addEventListener("click", toggleShuffle);
-
-  /* ── Repeat ── */
   dom.repeatBtn.addEventListener("click", cycleRepeat);
-
-  /* ── Like ── */
   dom.heartBtn.addEventListener("click", toggleLike);
 
-  /* ── Volume Range ── */
+  // Volume slider
   dom.volRange.addEventListener("input", (e) => {
-    const val = parseInt(e.target.value);
+    const val = parseInt(e.target.value, 10);
     currentSong.volume = val / 100;
     updateVolFill(val);
     dom.volIcon.src = val === 0 ? "img/mute.svg" : "img/volume.svg";
   });
 
-  /* ── Volume Mute Toggle ── */
+  // Mute / Unmute toggle
   dom.volIconBtn.addEventListener("click", () => {
     if (currentSong.volume > 0) {
       currentSong.dataset.lastVol = currentSong.volume;
@@ -591,12 +583,12 @@ function setupEventListeners() {
     }
   });
 
-  /* ── Sidebar Search ── */
+  // Track search in sidebar
   dom.sidebarSearch.addEventListener("input", (e) =>
     filterSidebar(e.target.value),
   );
 
-  /* ── Global Search (filter playlists) ── */
+  // Global playlist card filter
   dom.globalSearch.addEventListener("input", (e) => {
     const q = e.target.value.trim().toLowerCase();
     dom.cardContainer.querySelectorAll(".card").forEach((card) => {
@@ -607,15 +599,29 @@ function setupEventListeners() {
     });
   });
 
-  /* ── Mobile Sidebar ── */
+  // Home button & logo click: reset search and scroll to top
+  function resetToHome() {
+    dom.globalSearch.value = "";
+    dom.cardContainer.querySelectorAll(".card").forEach((card) => {
+      card.style.display = "";
+    });
+    if (dom.rightPanel) {
+      dom.rightPanel.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  if (dom.homeBtn) dom.homeBtn.addEventListener("click", resetToHome);
+  if (dom.logo) dom.logo.addEventListener("click", resetToHome);
+
+  // Mobile sidebar triggers
   dom.hamburgerBtn.addEventListener("click", openSidebar);
   dom.closeSidebar.addEventListener("click", closeSidebar);
   dom.sidebarOverlay.addEventListener("click", closeSidebar);
 
-  /* ── Keyboard Shortcuts ── */
+  // Global keyboard shortcuts
   document.addEventListener("keydown", (e) => {
     const tag = e.target.tagName.toLowerCase();
-    if (tag === "input") return; // don't fire inside inputs
+    if (tag === "input") return;
 
     switch (e.code) {
       case "Space":
@@ -640,12 +646,12 @@ function setupEventListeners() {
         break;
       case "ArrowUp":
         e.preventDefault();
-        dom.volRange.value = Math.min(100, parseInt(dom.volRange.value) + 5);
+        dom.volRange.value = Math.min(100, parseInt(dom.volRange.value, 10) + 5);
         dom.volRange.dispatchEvent(new Event("input"));
         break;
       case "ArrowDown":
         e.preventDefault();
-        dom.volRange.value = Math.max(0, parseInt(dom.volRange.value) - 5);
+        dom.volRange.value = Math.max(0, parseInt(dom.volRange.value, 10) - 5);
         dom.volRange.dispatchEvent(new Event("input"));
         break;
       case "KeyM":
@@ -654,13 +660,13 @@ function setupEventListeners() {
     }
   });
 
-  /* ── Init volume fill ── */
-  updateVolFill(parseInt(dom.volRange.value));
+  // Synchronize initial audio volume with the range input
+  const initialVol = parseInt(dom.volRange.value, 10);
+  currentSong.volume = initialVol / 100;
+  updateVolFill(initialVol);
 }
 
-/* ─────────────────────────────────────────
-   GREETING BASED ON TIME
-───────────────────────────────────────── */
+// Greeting banner based on current time
 function setGreeting() {
   const h = new Date().getHours();
   const greet =
@@ -675,15 +681,11 @@ function setGreeting() {
   if (el) el.textContent = greet;
 }
 
-/* ─────────────────────────────────────────
-   BOOT
-───────────────────────────────────────── */
 function init() {
   setupEventListeners();
   renderPlaylists();
   setGreeting();
 
-  // Show keyboard shortcut tip after a short delay
   setTimeout(() => {
     showToast("💡 Tip: Use Space / ← → / S R L keys to control playback");
   }, 1800);
