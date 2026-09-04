@@ -1,88 +1,74 @@
 # Spotify Clone
 
-A responsive web music player inspired by Spotify, built with vanilla HTML, CSS, and JavaScript. It uses the public iTunes Search API to fetch 30-second audio previews, track metadata, and high-resolution album artwork across 11 genre playlists without requiring authentication or API keys.
+A responsive music player built with vanilla HTML, CSS, and JavaScript.
 
-**Status:** Personal project / deployed demo  
-**Live Demo:** [https://spotify-clone-delta-gules.vercel.app/](https://spotify-clone-delta-gules.vercel.app/)
+It uses the iTunes Search API for track information, album artwork, and 30-second previews. No API key or authentication is required.
 
----
+**Live:** https://spotify-clone-delta-gules.vercel.app/
+
+**Status:** Personal project / deployed demo
 
 ## Preview
 
-| Desktop Player | Mobile Responsive |
-|---|---|
-| ![Desktop View](./screenshots/home.png) | ![Mobile View](./screenshots/mobile.png) |
+| Desktop | Mobile |
+|:---:|:---:|
+| ![Desktop player](./screenshots/home.png) | ![Mobile player](./screenshots/mobile.png) |
 
----
+## The player
 
-## Features
+The audio player uses the browser's native `Audio` API rather than a third-party player library.
 
-- **11 Curated Playlists:** Global Top 50, RapCaviar, Dance Hits, Indie, Country, Viral Hits, R&B Classics, K-Pop, Lo-Fi, Workout, and Jazz.
-- **Audio Playback:** Built on the native HTML5 `Audio` API with custom play/pause, seekbar progress, 3-state repeat (off, repeat-all, repeat-one), shuffle, and previous/next navigation.
-- **Dynamic Backdrop & Equalizer:** Ambient radial gradient backgrounds update to match each playlist's primary palette, and active tracks display CSS-animated equalizer bars that pause with playback.
-- **Liked Songs:** Heart button allows saving favorite tracks directly to browser `localStorage` so they persist across sessions.
-- **Search & Filtering:** Real-time client-side search across playlist cards and within loaded tracklists.
-- **Keyboard Shortcuts:**
-  - `Space` — Play / Pause
-  - `←` / `→` — Previous / Next track
-  - `S` — Toggle shuffle
-  - `R` — Cycle repeat mode
-  - `L` or `H` — Like / Unlike current track
-  - `↑` / `↓` — Volume up / down (5% increments)
-  - `M` — Mute / Unmute
-- **Responsive Layout:** Two-pane interface on desktop; collapses into an off-canvas navigation drawer with a compact mini-player on screens below 768px.
+It supports:
 
----
+- Play / pause
+- Seek and progress tracking
+- Previous / next track
+- Shuffle
+- Repeat all / repeat one
+- Volume and mute controls
+- Keyboard shortcuts
+- Animated equalizer while a track is playing
 
-## Technical Implementation Notes
+The player listens to native audio events such as `timeupdate`, `play`, `pause`, and `ended` to keep the UI in sync with playback.
 
-1. **Audio State Synchronization:**  
-   Instead of using third-party player libraries, the playback engine directly coordinates native `Audio` events (`timeupdate`, `ended`, `play`, `pause`) with the DOM. The seekbar calculates proportional width and updates `aria-valuenow` in real time. Pressing "Previous" restarts the current track if playback has progressed beyond 3 seconds, matching native music player UX.
+The previous button also restarts the current track when it has been playing for more than three seconds, similar to the behavior users expect from music players.
 
-2. **Artwork Resolution Swapping:**  
-   The iTunes Search API returns standard 100×100 thumbnail URLs (`.../100x100bb.jpg`). The app rewrites the URL parameter to `400x400bb.jpg` on load, providing crisp album art on high-DPI displays without additional network overhead.
+## Other parts
 
-3. **CSS Flexbox Scrolling Architecture:**  
-   To prevent vertical overflow issues common in fixed-viewport web apps, container elements use `min-height: 0` alongside `overflow-y: auto`. This ensures independent scrolling in the tracklist sidebar and playlist grid while keeping the bottom playbar pinned.
+**Search** filters both playlists and tracks already loaded in the browser.
 
----
+**Liked songs** are stored in `localStorage`, so they remain available after refreshing the page.
 
-## Tech Stack
+Each playlist has its own ambient background and the currently playing track gets an animated equalizer.
 
-- **Frontend:** Vanilla JavaScript (ES6 Modules), Semantic HTML5, Vanilla CSS3 (Flexbox, Grid, CSS Variables)
-- **Audio & Data:** Native HTML5 Audio API, iTunes Search API (REST JSON)
-- **Tooling & Hosting:** Vite, Vercel
+On smaller screens, the two-column desktop layout changes into a navigation drawer with a compact player.
 
----
+## One small API detail
 
-## Getting Started
+The iTunes API returns album artwork using smaller image URLs. The app swaps the image size in those URLs when loading artwork so the larger version is used for the player and album views.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/hritikbytes/spotify-clone.git
-   cd spotify-clone
-   ```
+## Built with
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+- HTML5
+- CSS3
+- Vanilla JavaScript (ES modules)
+- HTML5 Audio API
+- iTunes Search API
+- Vite
 
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+## Run locally
 
-4. Build for production:
-   ```bash
-   npm run build
-   ```
+    git clone https://github.com/hritikbytes/spotify-clone.git
+    cd spotify-clone
+    npm install
+    npm run dev
 
----
+For a production build:
 
-## Developer
+    npm run build
 
-**Hritik Sharma**  
-- GitHub: [@hritikbytes](https://github.com/hritikbytes)  
-- LinkedIn: [Hritik Sharma](https://www.linkedin.com/in/hritiksharma0608/)  
-- Email: hritiksharma.0608@gmail.com
+Then open the local Vite URL shown in the terminal.
+
+## Note
+
+This is a personal project inspired by Spotify's interface and is not affiliated with or endorsed by Spotify.
